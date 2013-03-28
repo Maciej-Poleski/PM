@@ -82,11 +82,11 @@ public class MainService extends Service {
                                 sites.put(address, digest);
 
                                 NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(MainService.this)
-                                        .setSmallIcon(0)
+                                        .setSmallIcon(123)
                                         .setContentTitle("Web page changed")
                                         .setContentText(address + " changed");
                                 Intent resultIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(address));
-                                PendingIntent resultPendingIntent = PendingIntent.getActivity(MainService.this, 0, resultIntent, 0);
+                                PendingIntent resultPendingIntent = PendingIntent.getActivity(MainService.this, 0, resultIntent, Intent.FLAG_ACTIVITY_NEW_TASK);
                                 mBuilder.setContentIntent(resultPendingIntent);
                                 NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                                 mNotificationManager.notify(address.hashCode(), mBuilder.build());
