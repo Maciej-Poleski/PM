@@ -6,10 +6,17 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 
-import java.util.ArrayList;
-
 public class MyActivity extends Activity {
-    ArrayAdapter<String> arrayAdapter;
+    private static MyActivity instance = null;
+    private ArrayAdapter<String> arrayAdapter;
+
+    public static MyActivity getInstance() {
+        return instance;
+    }
+
+    public ArrayAdapter<String> getArrayAdapter() {
+        return arrayAdapter;
+    }
 
     private void sendRequest(String request) {
         Intent startServiceIntent = new Intent(this, MainService.class);
@@ -21,7 +28,6 @@ public class MyActivity extends Activity {
         Intent startServiceIntent = new Intent(this, MainService.class);
         startServiceIntent.putExtra("REQUEST TYPE", "ADDRESS");
         startServiceIntent.putExtra("ADDRESS", address);
-        arrayAdapter.add(address);
         startService(startServiceIntent);
     }
 
@@ -29,11 +35,8 @@ public class MyActivity extends Activity {
         Intent startServiceIntent = new Intent(this, MainService.class);
         startServiceIntent.putExtra("REQUEST TYPE", "ADDRESS REMOVE");
         startServiceIntent.putExtra("ADDRESS", address);
-        arrayAdapter.remove(address);
         startService(startServiceIntent);
     }
-
-
 
     /**
      * Called when the activity is first created.
@@ -41,10 +44,11 @@ public class MyActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        instance = this;
         setContentView(R.layout.main);
         sendRequest("JUST START");
         ListView listView = (ListView) findViewById(R.id.listView);
-        arrayAdapter = new ArrayAdapter<String>(this, R.layout.text_view, new ArrayList<String>());
+        arrayAdapter = new ArrayAdapter<>(this, R.layout.text_view, MainService.getAddressList());
         listView.setAdapter(arrayAdapter);
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
@@ -63,4 +67,9 @@ public class MyActivity extends Activity {
         addAddress(address);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        instance = null;
+    }
 }

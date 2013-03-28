@@ -12,9 +12,7 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.DigestInputStream;
@@ -27,15 +25,55 @@ import java.util.*;
  * Time: 18:52
  */
 public class MainService extends Service {
-    List<String> addressList = Collections.synchronizedList(new ArrayList<String>());
-    Map<String, byte[]> sites = Collections.synchronizedMap(new HashMap<String, byte[]>());
+    private final static List<String> addressList = Collections.synchronizedList(new ArrayList<String>());
+    private final Map<String, byte[]> sites = Collections.synchronizedMap(new HashMap<String, byte[]>());
+
+    public static List<String> getAddressList() {
+        return addressList;
+    }
+
+    private void saveState() {
+        try {
+            FileOutputStream fileOutputStream = openFileOutput("state", MODE_PRIVATE);
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            objectOutputStream.writeObject(addressList);
+            objectOutputStream.writeObject(sites);
+            objectOutputStream.close();
+            fileOutputStream.close();
+        } catch (IOException ignored) {
+        }
+    }
+
+    private void loadState() {
+        try {
+            FileInputStream fileInputStream = openFileInput("state");
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            List<String> addressList = (List<String>) objectInputStream.readObject();
+            Map<String, byte[]> sites = (Map<String, byte[]>) objectInputStream.readObject();
+            synchronized (MainService.addressList) {
+                MainService.addressList.clear();
+                MainService.addressList.addAll(addressList);
+            }
+            synchronized (this.sites) {
+                this.sites.clear();
+                this.sites.putAll(sites);
+            }
+            objectInputStream.close();
+            fileInputStream.close();
+            MyActivity activity2 = MyActivity.getInstance();
+            if (activity2 != null) {
+                activity2.getArrayAdapter().notifyDataSetChanged();
+            }
+        } catch (IOException | ClassNotFoundException ignored) {
+        }
+    }
 
     public IBinder onBind(Intent intent) {
         return null;
     }
 
     /**
-     * Bardzo leniwie. Nie wznamia urządzenia. Następny CHECK względem poprzedniego.
+     * Bardzo leniwie. Nie wznawia urządzenia. Następny CHECK względem poprzedniego.
      */
     private void setupNextGlobalCheck() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -56,7 +94,6 @@ public class MainService extends Service {
                 for (String address : frozenAddressList) {
                     AndroidHttpClient httpClient = null;
                     InputStream is = null;
-                    long count = 0;
                     try {
                         URL url = new URL(address);
                         URLConnection connection = url.openConnection();
@@ -75,14 +112,13 @@ public class MainService extends Service {
                         byte[] digest = md.digest();
                         if (sites.containsKey(address)) {
                             byte[] t1 = sites.get(address);
-                            byte[] t2 = digest;
-                            boolean result = Arrays.equals(t1, t2);
+                            boolean result = Arrays.equals(t1, digest);
                             if (!result) {
                                 // Odpalić przeglądarke
                                 sites.put(address, digest);
 
                                 NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(MainService.this)
-                                        .setSmallIcon(123)
+                                        .setSmallIcon(R.drawable.monitor)
                                         .setContentTitle("Web page changed")
                                         .setContentText(address + " changed");
                                 Intent resultIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(address));
@@ -90,13 +126,12 @@ public class MainService extends Service {
                                 mBuilder.setContentIntent(resultPendingIntent);
                                 NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                                 mNotificationManager.notify(address.hashCode(), mBuilder.build());
-                                System.out.println("notification sent");
                             }
                         } else {
                             sites.put(address, digest);
+                            saveState();
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
                         // To nic - spróbujemy następnym razem (albo nie URI)
                     } finally {
                         if (httpClient != null) {
@@ -115,6 +150,12 @@ public class MainService extends Service {
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        loadState();
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String requestType = intent.getStringExtra("REQUEST TYPE");
         switch (requestType) {
@@ -123,15 +164,20 @@ public class MainService extends Service {
                 break;
             case "ADDRESS":
                 addressList.add(intent.getStringExtra("ADDRESS"));
+                saveState();
+                MyActivity activity = MyActivity.getInstance();
+                if (activity != null)
+                    activity.getArrayAdapter().notifyDataSetChanged();
                 break;
             case "ADDRESS REMOVE":
                 addressList.remove(intent.getStringExtra("ADDRESS"));
+                saveState();
+                MyActivity activity2 = MyActivity.getInstance();
+                if (activity2 != null)
+                    activity2.getArrayAdapter().notifyDataSetChanged();
                 break;
             case "GLOBAL CHECK":
                 performGlobalCheck();
-                break;
-            default:
-                System.out.println("Dziwny request: " + requestType);
                 break;
         }
         return START_STICKY;
