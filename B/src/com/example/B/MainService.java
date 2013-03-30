@@ -64,7 +64,8 @@ public class MainService extends Service {
             if (activity2 != null) {
                 activity2.getArrayAdapter().notifyDataSetChanged();
             }
-        } catch (IOException | ClassNotFoundException ignored) {
+        } catch (IOException ignored) {
+        } catch (ClassNotFoundException ignored) {
         }
     }
 
@@ -89,7 +90,7 @@ public class MainService extends Service {
             public void run() {
                 List<String> frozenAddressList;
                 synchronized (addressList) {
-                    frozenAddressList = new ArrayList<>(addressList);
+                    frozenAddressList = new ArrayList<String>(addressList);
                 }
                 for (String address : frozenAddressList) {
                     AndroidHttpClient httpClient = null;
@@ -158,27 +159,26 @@ public class MainService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String requestType = intent.getStringExtra("REQUEST TYPE");
-        switch (requestType) {
-            case "JUST START":
-                performGlobalCheck();
-                break;
-            case "ADDRESS":
-                addressList.add(intent.getStringExtra("ADDRESS"));
-                saveState();
-                MyActivity activity = MyActivity.getInstance();
-                if (activity != null)
-                    activity.getArrayAdapter().notifyDataSetChanged();
-                break;
-            case "ADDRESS REMOVE":
-                addressList.remove(intent.getStringExtra("ADDRESS"));
-                saveState();
-                MyActivity activity2 = MyActivity.getInstance();
-                if (activity2 != null)
-                    activity2.getArrayAdapter().notifyDataSetChanged();
-                break;
-            case "GLOBAL CHECK":
-                performGlobalCheck();
-                break;
+        if (requestType.equals("JUST START")) {
+            performGlobalCheck();
+
+        } else if (requestType.equals("ADDRESS")) {
+            addressList.add(intent.getStringExtra("ADDRESS"));
+            saveState();
+            MyActivity activity = MyActivity.getInstance();
+            if (activity != null)
+                activity.getArrayAdapter().notifyDataSetChanged();
+
+        } else if (requestType.equals("ADDRESS REMOVE")) {
+            addressList.remove(intent.getStringExtra("ADDRESS"));
+            saveState();
+            MyActivity activity2 = MyActivity.getInstance();
+            if (activity2 != null)
+                activity2.getArrayAdapter().notifyDataSetChanged();
+
+        } else if (requestType.equals("GLOBAL CHECK")) {
+            performGlobalCheck();
+
         }
         return START_STICKY;
     }

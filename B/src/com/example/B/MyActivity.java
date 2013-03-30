@@ -48,7 +48,7 @@ public class MyActivity extends Activity {
         setContentView(R.layout.main);
         sendRequest("JUST START");
         ListView listView = (ListView) findViewById(R.id.listView);
-        arrayAdapter = new ArrayAdapter<>(this, R.layout.text_view, MainService.getAddressList());
+        arrayAdapter = new ArrayAdapter<String>(this, R.layout.text_view, MainService.getAddressList());
         listView.setAdapter(arrayAdapter);
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
