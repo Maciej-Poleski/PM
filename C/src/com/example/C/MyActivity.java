@@ -49,4 +49,13 @@ public class MyActivity extends Activity {
         TextView view = (TextView) findViewById(R.id.text_view);
         view.setText(message);
     }
+
+    public void newBoardAvailable(final Board board) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setMessage(board.toString());
+            }
+        });
+    }
 }
