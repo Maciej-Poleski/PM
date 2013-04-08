@@ -5,6 +5,11 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Xml;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -73,6 +78,29 @@ public class MyService extends Service {
                 }
             }
         }, 0, 1500);
+    }
+
+    public void sendPath(final Path path, final Runnable successCallback, final Runnable failCallback) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String xml = path.getXml(MyService.this);
+                    HttpClient httpclient = new DefaultHttpClient();
+                    HttpPost httppost = new HttpPost("http://grzegorz.gutowski.staff.tcs.uj.edu.pl/board/newpath/");
+
+                    httppost.setEntity(new StringEntity(xml));
+
+                    HttpResponse response = httpclient.execute(httppost);
+                    if (successCallback != null)
+                        successCallback.run();
+                } catch (Exception e) {
+                    if (failCallback != null)
+                        failCallback.run();
+                }
+            }
+        }).start();
+
     }
 
     class MyBinder extends Binder {

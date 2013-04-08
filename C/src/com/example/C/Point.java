@@ -13,6 +13,14 @@ import java.io.IOException;
 public class Point {
     double x, y;
 
+    public Point() {
+    }
+
+    public Point(double x, double y) {
+        this.x=x;
+        this.y=y;
+    }
+
     public static Point readFromXml(XmlPullParser parser) throws IOException, XmlPullParserException {
         Point result = new Point();
 
@@ -20,11 +28,20 @@ public class Point {
         String tag = parser.getName();
         String x = parser.getAttributeValue(null, "x");
         String y = parser.getAttributeValue(null, "y");
+        parser.nextTag();
         parser.require(XmlPullParser.END_TAG, null, "point");
         result.x = Double.parseDouble(x);
         result.y = Double.parseDouble(y);
         return result;
 
+    }
+
+    @Override
+    public String toString() {
+        return "Point{" +
+                "x=" + x +
+                ", y=" + y +
+                '}';
     }
 
     @Override
@@ -49,5 +66,9 @@ public class Point {
         temp = Double.doubleToLongBits(y);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
+    }
+
+    public String getXml() {
+        return "<point x=\"" + Double.toString(x) + "\" y=\"" + Double.toString(y) + "\" />\n";
     }
 }

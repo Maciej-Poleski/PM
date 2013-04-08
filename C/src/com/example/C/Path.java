@@ -1,6 +1,8 @@
 package com.example.C;
 
+import android.content.Context;
 import android.graphics.Color;
+import android.telephony.TelephonyManager;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -42,6 +44,15 @@ public class Path {
     }
 
     @Override
+    public String toString() {
+        return "Path{" +
+                "userId=" + userId +
+                ", color=" + color +
+                ", points=" + points +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -61,5 +72,15 @@ public class Path {
         result = 31 * result + color;
         result = 31 * result + points.hashCode();
         return result;
+    }
+
+    public String getXml(Context context) {
+        StringBuilder result = new StringBuilder("<?xml version=\"1.0\"?>\n" +
+                "<newpath userId=\"" + ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId() + "\">\n");
+        for (Point point : points) {
+            result.append(point.getXml());
+        }
+        result.append("</newpath>\n");
+        return result.toString();
     }
 }
