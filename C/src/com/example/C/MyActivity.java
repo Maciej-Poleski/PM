@@ -7,7 +7,10 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class MyActivity extends Activity {
 
@@ -26,6 +29,7 @@ public class MyActivity extends Activity {
             service = null;
         }
     };
+    private List<Path> myPaths = Collections.synchronizedList(new ArrayList<Path>());
 
     /**
      * Called when the activity is first created.
@@ -34,6 +38,9 @@ public class MyActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+        MyView view = (MyView) findViewById(R.id.view);
+        view.setActivity(this);
 
         Intent intent = new Intent(this, MyService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
@@ -45,17 +52,43 @@ public class MyActivity extends Activity {
         unbindService(serviceConnection);
     }
 
-    public void setMessage(String message) {
-        TextView view = (TextView) findViewById(R.id.text_view);
-        view.setText(message);
-    }
-
     public void newBoardAvailable(final Board board) {
+        adjustListOfMyPaths(board);
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                setMessage(board.toString());
+                repopulateGui(board);
             }
         });
+    }
+
+    public void addNewPath(Path path) {
+        myPaths.add(path);
+        service.sendPath(path,null,null);
+    }
+
+    /**
+     * Musi być wywołane z wątku GUI
+     *
+     * @param board
+     */
+    private void repopulateGui(Board board) {
+        MyView view = (MyView) findViewById(R.id.view);
+        view.setBoard(board);
+        view.addMyPaths(myPaths);
+        view.invalidate();
+    }
+
+    public void adjustListOfMyPaths(Board board) {
+        for (Path path : board.paths) {
+            synchronized (myPaths) {
+                for (int i = 0; i < myPaths.size(); ++i)
+                    if (myPaths.get(i).almostEquals(path)) {
+                        myPaths.remove(i);
+                        break;
+                    }
+            }
+        }
     }
 }

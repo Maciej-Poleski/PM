@@ -68,16 +68,15 @@ public class MyService extends Service {
                         }
 
                     } catch (XmlPullParserException e) {
-                        e.printStackTrace();
+                        // Czasem się zdarza, gdy strumień jest pusty
                     } finally {
                         is.close();
                     }
                 } catch (IOException e) {
                     // Spróbujemy następnym razem
-                    e.printStackTrace();
                 }
             }
-        }, 0, 1500);
+        }, 0, 1000);
     }
 
     public void sendPath(final Path path, final Runnable successCallback, final Runnable failCallback) {

@@ -15,7 +15,7 @@ import java.util.List;
  * Date: 07.04.13
  * Time: 21:59
  */
-public class Path {
+public class Path implements Cloneable {
     long userId;
     int color;
     List<Point> points = new ArrayList<Point>();
@@ -53,6 +53,17 @@ public class Path {
     }
 
     @Override
+    public Path clone() throws CloneNotSupportedException {
+        Path result= (Path) super.clone();
+        result.points=new ArrayList<Point>();
+        for(Point point : points)
+        {
+            result.points.add(point.clone());
+        }
+        return result;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -82,5 +93,16 @@ public class Path {
         }
         result.append("</newpath>\n");
         return result.toString();
+    }
+
+    public boolean almostEquals(Path path) {
+        if (path == null)
+            return false;
+        if (points.size() != path.points.size())
+            return false;
+        for (int i = 0; i < points.size(); ++i)
+            if (!points.get(i).almostEquals(path.points.get(i)))
+                return false;
+        return true;
     }
 }

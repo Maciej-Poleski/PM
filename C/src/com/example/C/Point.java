@@ -10,15 +10,20 @@ import java.io.IOException;
  * Date: 07.04.13
  * Time: 21:57
  */
-public class Point {
+public class Point implements Cloneable {
     double x, y;
 
     public Point() {
     }
 
+    @Override
+    public Point clone() throws CloneNotSupportedException {
+        return (Point) super.clone();
+    }
+
     public Point(double x, double y) {
-        this.x=x;
-        this.y=y;
+        this.x = x;
+        this.y = y;
     }
 
     public static Point readFromXml(XmlPullParser parser) throws IOException, XmlPullParserException {
@@ -70,5 +75,11 @@ public class Point {
 
     public String getXml() {
         return "<point x=\"" + Double.toString(x) + "\" y=\"" + Double.toString(y) + "\" />\n";
+    }
+
+    public boolean almostEquals(Point point) {
+        if (point == null)
+            return false;
+        return Math.abs(x - point.x) < 0.0001 && Math.abs(y - point.y) < 0.0001;
     }
 }

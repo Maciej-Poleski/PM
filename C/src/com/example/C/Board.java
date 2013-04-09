@@ -12,16 +12,8 @@ import java.util.List;
  * Date: 07.04.13
  * Time: 22:00
  */
-public class Board {
+public class Board implements Cloneable {
     List<Path> paths = new ArrayList<Path>();
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("Board{");
-        sb.append("paths=").append(paths);
-        sb.append('}');
-        return sb.toString();
-    }
 
     public static Board readFromXml(XmlPullParser parser) throws IOException, XmlPullParserException {
         Board result = new Board();
@@ -44,6 +36,7 @@ public class Board {
 
     /**
      * To nie moje.
+     *
      * @param parser
      * @throws XmlPullParserException
      * @throws IOException
@@ -66,6 +59,23 @@ public class Board {
     }
 
     @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Board{");
+        sb.append("paths=").append(paths);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    @Override
+    public Board clone() throws CloneNotSupportedException {
+        Board result = (Board) super.clone();
+        result.paths = new ArrayList<Path>();
+        for (Path path : paths)
+            result.paths.add(path.clone());
+        return result;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -81,4 +91,5 @@ public class Board {
     public int hashCode() {
         return paths.hashCode();
     }
+
 }
