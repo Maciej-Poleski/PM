@@ -24,7 +24,8 @@
 
 using namespace Wt;
 
-std::string regId;
+static std::string regId();
+static void setRegId(const std::string &regId);
 
 /*
  * A simple hello world application class which demonstrates how to react
@@ -61,11 +62,11 @@ HelloApplication::HelloApplication(const WEnvironment &env)
     _nameLineEdit->setFocus();                                 // give focus
 
     root()->addWidget(new WBreak());
-    
-    _messageBody=new WTextArea("Message",root());
-    
+
+    _messageBody = new WTextArea("Message", root());
+
     root()->addWidget(new WBreak());
-    
+
     WPushButton *button
     = new WPushButton("Send", root());              // create a button
     button->setMargin(10, Left | Top | Bottom);            // add 5 pixels margin
@@ -113,10 +114,10 @@ void HelloApplication::sendMessage()
     message.setHeader("Content-Type", "application/json");
     message.setHeader("Authorization", "key=AIzaSyAoynlFvcOvbo4QyNP7MryXeShekCWi3Sw");
     message.addBodyText("{\n"
-                        "\"registration_ids\" : [\""+regId+"\"],\n"
+                        "\"registration_ids\" : [\"" + regId() + "\"],\n"
                         "\"data\" : {\n"
-                        "\"name\" : \""+_nameLineEdit->text().toUTF8()+"\"\n"
-                        "\"message\" : \""+_messageBody->text().toUTF8()+"\"\n"
+                        "\"name\" : \"" + _nameLineEdit->text().toUTF8() + "\"\n"
+                        "\"message\" : \"" + _messageBody->text().toUTF8() + "\"\n"
                         "},\n"
                         "}");
     if (client->post("https://android.googleapis.com/gcm/send", message)) {
@@ -128,10 +129,11 @@ void HelloApplication::sendMessage()
 }
 
 void HelloApplication::handleHttpResponse(boost::system::error_code err, const Http::Message &response)
-{    if (!err) {
-        greeting_->setText("HTTP RESPONSE: "+ boost::lexical_cast<std::string>(response.status()));
+{
+    if (!err) {
+        greeting_->setText("HTTP RESPONSE: " + boost::lexical_cast<std::string>(response.status()) + "<br/>\n<br/>\n" + response.body());
         std::cerr << response.body() << '\n';
-} else {
+    } else {
         greeting_->setText("An error occured");
     }
     triggerUpdate();
@@ -147,7 +149,23 @@ class RegIdResource : public WResource
 void RegIdResource::handleRequest(const Http::Request &request, Http::Response &response)
 {
     if (!request.getParameterValues("regId").empty())
-        regId = request.getParameterValues("regId")[0];
+        setRegId(request.getParameterValues("regId")[0]);
+}
+
+#include <fstream>
+
+std::string regId()
+{
+    std::ifstream in("regId");
+    std::string result;
+    in >> result;
+    return result;
+}
+
+void setRegId(const std::string &regId)
+{
+    std::ofstream out("regId");
+    out << regId;
 }
 
 WApplication *createApplication(const WEnvironment &env)
