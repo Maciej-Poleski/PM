@@ -170,17 +170,14 @@ void setRegId(const std::string &regId)
 
 WApplication *createApplication(const WEnvironment &env)
 {
-    static bool init = true;
-    if (init) {
-        init = false;
-        WServer::instance()->addResource(new RegIdResource(), "/register");
-    }
     /*
      * You could read information from the environment to decide whether
      * the user has permission to start a new application
      */
     return new HelloApplication(env);
 }
+
+#include <thread>
 
 
 int main(int argc, char **argv)
@@ -196,7 +193,12 @@ int main(int argc, char **argv)
      * support. The function should return a newly instantiated application
      * object.
      */
+    std::thread([] {
+        sleep(3);
+        WServer::instance()->addResource(new RegIdResource(), "/register");
+    }).detach();
     return WRun(argc, argv, &createApplication);
 }
+
 
 
