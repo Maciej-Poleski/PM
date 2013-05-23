@@ -55,6 +55,16 @@ private:
 HelloApplication::HelloApplication(const WEnvironment &env)
     : WApplication(env)
 {
+    std::cerr<<"-------------------------------------\n";
+    for(const auto m : env.getParameterMap())
+    {
+        std::cerr<<"Klucz: "<<m.first<<'\n';
+        for(const auto s : m.second)
+        {
+            std::cerr<<s<<'\n';
+        }
+    }
+    
     setTitle("Hello world");                               // application title
 
     root()->addWidget(new WText("Name:"));  // show some text
@@ -146,17 +156,28 @@ class RegIdResource : public WResource
     virtual void handleRequest(const Http::Request &request, Http::Response &response);
 };
 
+#include <Wt/Http/Response>
+#include <fstream>
+
 void RegIdResource::handleRequest(const Http::Request &request, Http::Response &response)
 {
+    std::cerr<<"------------------REQ----------------\n";
+    for(const auto m : request.getParameterMap())
+    {
+        std::cerr<<"Klucz: "<<m.first<<'\n';
+        for(const auto s : m.second)
+        {
+            std::cerr<<s<<'\n';
+        }
+    }
     if (!request.getParameterValues("regId").empty())
         setRegId(request.getParameterValues("regId")[0]);
+    std::ofstream("/tmp/req");
 }
-
-#include <fstream>
 
 std::string regId()
 {
-    std::ifstream in("regId");
+    std::ifstream in("/tmp/regId");
     std::string result;
     in >> result;
     return result;
@@ -164,7 +185,7 @@ std::string regId()
 
 void setRegId(const std::string &regId)
 {
-    std::ofstream out("regId");
+    std::ofstream out("/tmp/regId");
     out << regId;
 }
 
@@ -178,7 +199,42 @@ WApplication *createApplication(const WEnvironment &env)
 }
 
 #include <thread>
+#include <signal.h>
 
+int MyRun(int argc, char *argv[], ApplicationCreator createApplication)
+{
+    try {
+        // use argv[0] as the application name to match a suitable entry
+        // in the Wt configuration file, and use the default configuration
+        // file (which defaults to /etc/wt/wt_config.xml unless the environment
+        // variable WT_CONFIG_XML is set)
+        WServer server(argv[0]);
+        
+        // WTHTTP_CONFIGURATION is e.g. "/etc/wt/wthttpd"
+        server.setServerConfiguration(argc, argv, WTHTTP_CONFIGURATION);
+        
+        // add a single entry point, at the default location (as determined
+        // by the server configuration's deploy-path)
+        server.addEntryPoint(Wt::Application, createApplication);
+        server.addResource(new RegIdResource(),"/register/");
+        //server.addResource(new RegIdResource(),"/");
+        if (server.start()) {
+            int sig = WServer::waitForShutdown(argv[0]);
+            
+            std::cerr << "Shutdown (signal = " << sig << ")" << std::endl;
+            server.stop();
+            
+            if (sig == SIGHUP)
+                WServer::restart(argc, argv, environ);
+        }
+    } catch (WServer::Exception& e) {
+        std::cerr << e.what() << "\n";
+        return 1;
+    } catch (std::exception& e) {
+        std::cerr << "exception: " << e.what() << "\n";
+        return 1;
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -193,11 +249,7 @@ int main(int argc, char **argv)
      * support. The function should return a newly instantiated application
      * object.
      */
-    std::thread([] {
-        sleep(3);
-        WServer::instance()->addResource(new RegIdResource(), "/register");
-    }).detach();
-    return WRun(argc, argv, &createApplication);
+    return MyRun(argc, argv, &createApplication);
 }
 
 
