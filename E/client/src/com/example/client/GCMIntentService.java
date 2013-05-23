@@ -1,7 +1,11 @@
 package com.example.client;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.support.v4.app.NotificationCompat;
 import com.google.android.gcm.GCMBaseIntentService;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -56,6 +60,16 @@ public class GCMIntentService extends GCMBaseIntentService {
     @Override
     protected void onMessage(Context context, Intent intent) {
         System.err.println("Received some message");
+        String message=intent.getStringExtra("message");
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(GCMIntentService.this)
+                .setSmallIcon(R.drawable.monitor)
+                .setContentTitle("Web page changed")
+                .setContentText(intent.getStringExtra("message"));
+        Intent resultIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://google.com/"));
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(GCMIntentService.this, 0, resultIntent, Intent.FLAG_ACTIVITY_NEW_TASK);
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(message.hashCode(), mBuilder.build());
     }
 
     @Override

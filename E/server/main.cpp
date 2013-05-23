@@ -125,6 +125,7 @@ void HelloApplication::sendMessage()
     message.setHeader("Authorization", "key=AIzaSyAoynlFvcOvbo4QyNP7MryXeShekCWi3Sw");
     message.addBodyText("{\n"
                         "\"registration_ids\" : [\"" + regId() + "\"],\n"
+                        "\"delay_while_idle\" : true,\n"
                         "\"data\" : {\n"
                         "\"name\" : \"" + _nameLineEdit->text().toUTF8() + "\"\n"
                         "\"message\" : \"" + _messageBody->text().toUTF8() + "\"\n"
